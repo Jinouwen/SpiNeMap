@@ -1,0 +1,115 @@
+Noxim - the NoC Simulator
+=========================
+
+Installation instructions
+-------------------------
+
+This guide will show you how to install Noxim on your computer.
+
+
+Supported Platforms
+-------------------
+
+Noxim is written using the C++ language and the SystemC library, so it is easily portable to
+any platform for which SystemC is supported: please refer to their (SystemC) documentation to
+know which they are. Just to let you know, we usually work under GNU/Linux (mainly Ubuntu)
+but SystemC is known to run under other platforms including Apple Mac OS X and Sun Solaris
+with GCC and Microsoft Windows with Visual C++ (but Cygwin with GCC is also known to work).
+
+This document will then detail the steps required to build Noxim from the sources, including
+all prerequisites.
+
+
+PREREQUISITES: C++ compiler, YAML (with Boost Libraries), SystemC
+
+C++ compiler installation
+----------------------------------
+To compile SystemC you will obviously need a C++ compiler; if you still don't have it, on
+ Debian/Ubuntu platforms you may install all the required tools with the following command:
+
+   sudo apt-get install build-essential
+
+YAML installation
+----------------------------------
+The name of the package depends on the Unix version you are using.
+
+On Ubuntu 14.04, for example, it is possible to install yaml (and the required boost 
+libraries) with:
+
+    sudo apt-get install libyaml-cpp-dev libboost-dev
+
+    If the packet libyaml-cpp-dev is not available just build yaml-cpp:
+    Prerequisites:
+    - CMake
+        sudo apt-get install cmake
+
+    - Boost libs
+        sudo apt-get install libboost-dev
+
+    Then download the code at https://github.com/jbeder/yaml-cpp/archive/master.zip
+    and execute the folloqing commands: 
+
+        unzip yaml-cpp-master.zip
+        mv yaml-cpp-master yaml-cpp
+        cd yaml-cpp
+        mkdir lib
+        cd lib
+        cmake ..
+        make
+        sudo make install
+
+
+On MacOSX, when using macports, just type:
+
+    sudo port install yaml-cpp
+
+Please also set properly the YAML path in the Makefile, as follows:
+YAML    := /opt/local/
+
+SystemC installation
+----------------------------------
+
+- Download SystemC (currently at version 2.3.1) from 
+  http://www.accellera.org/downloads/standards/systemc (a free registration is required).
+- Unpack it:
+    tar -xzf systemc-2.3.1.tgz
+
+- Enter the newly created directory and refer to the file INSTALL which details all the steps
+  required for building. Basically they are:
+
+    mkdir objdir
+    cd objdir
+    export CXX=g++
+    ../configure
+    make
+    make install
+    cd ..
+    rm -rf objdir
+
+  Once you have installed SystemC correctly, you may then jump to the next step.
+
+
+Build Noxim
+-------------
+
+If SystemC is installed correctly, then you just have to compile Noxim.
+
+1) Extract the source files and go to the "bin" directory.
+
+2) In that directory edit the file Makefile to modify "SYSTEMC" and "YAML" 
+environment variables according to your installation paths. Please, note that the
+values already set in the Makefile should be fine if you are using Ubuntu  
+
+3) Just run "make".
+
+You may ignore warning messages (if any), so if you don't get any error you are
+ready to run Noxim for the first time using the command:
+
+    ./noxim
+
+If everything works fine, it is now safe for you to copy or move this executable
+elsewhere; if you are a maniac of cleaning please note that "make clean" will
+also delete the executable... so move it before cleaning!
+
+That's all, folks!
+
