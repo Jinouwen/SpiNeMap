@@ -1,20 +1,9 @@
-# Simple default config of a 4x4 mesh
-# Each parameter is overwritten when corresponding command line value is set
-#
-# NOC & WIRED CONFIGURATION
-#
-#
-# X and Y sizes
 network_type: "MESH"
 rout_only_nodes: []
-dim_x: 3
-dim_y: 3
 # number of router cycles to process a flit
 router_cycle: 2
 # number of flits for each router buffer
 buffer_depth: 4
-# size of flits, in bits
-flit_size: 32
 # lenght in mm of router to hub connection
 r2h_link_length: 1.0 
 # lenght in mm of router to router connection
@@ -160,8 +149,12 @@ log_mode: true
 log_filename: "log_cluster_2x2.txt"
 
 
-traffic_filename: "traffic.txt"
-neuron_node_filename: "node_mapping.txt"
-neural_network_filename: "connection_table.txt"
+network_type: "MESH"
+dim_x: 5
+dim_y: 5
+flit_size: 32
+routing_algorithm: XY
+traffic_filename: "/home/adarsha/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/traffic.txt"
+neuron_node_filename: "/home/adarsha/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/node_mapping.txt"
+neural_network_filename: "/home/adarsha/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/connection_table.txt"
 cluster_traffic: false
-

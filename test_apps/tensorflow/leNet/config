@@ -1,0 +1,27 @@
+[paths]
+dataset_path = ./dataset
+filename_ann = lenet
+filename_snn = snn_lenet
+path_wd = ./
+
+[tools]
+evaluate_ann = True
+parse = True
+normalize = True
+
+[input]
+model_lib = keras
+dataset_format = npz
+poisson_input = True
+input_rate = 1000
+
+[simulation]
+duration = 30
+num_to_test = 100
+batch_size = 10
+
+[conversion]
+max2avg_pool = False
+
+[output]
+log_vars = {'spiketrains_n_b_l_t'}

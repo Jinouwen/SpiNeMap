@@ -1,12 +1,13 @@
 ##### LIBRARIES CONFIGURATION #####
 
-SYSTEMC := libs/systemc-2.3.1
-YAML    := libs/yaml-cpp
+SYSTEMC := /home/disco-toolchain/Documents/toolchain/systemc
+YAML    := /usr/local
 
 
 ##### DIRECTORIES #####
 
-SYSTEMC_LIBS := $(wildcard $(SYSTEMC)/lib-*)
+#SYSTEMC_LIBS := $(wildcard $(SYSTEMC)/lib-*)
+SYSTEMC_LIBS := /home/disco-toolchain/Documents/toolchain/systemc/lib-linux64
 
 SRCDIR  := ../src
 SUBDIRS := $(filter %/,$(wildcard $(SRCDIR)/*/))
@@ -29,7 +30,7 @@ CXXFLAGS := $(OPT) $(OTHER) $(DEBUG)
 INCDIR := -I$(SRCDIR) -isystem $(SYSTEMC)/include -I$(YAML)/include
 LIBDIR := -L$(SRCDIR) -L$(SYSTEMC_LIBS) -L$(YAML)/lib
 
-LIBS := -lsystemc -lm -lyaml-cpp 
+LIBS := -lsystemc-2.3.1 -lm -lyaml-cpp 
 
 SPACE := $(subst ,, )
 VPATH := $(SRCDIR):$(subst $(SPACE),:,$(SUBDIRS))

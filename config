@@ -1,0 +1,36 @@
+# this is the config file that is used by the SpiNeMap toolchain
+
+#####################################################################################################
+#SIMULATION
+#####################################################################################################
+
+# provide the name used in the CARLsim Makefile. 
+Simulation : True
+SimulationTool : tensorflow
+ApplicationName : LeNet
+# ApplicationLocation : /home/disco-toolchain/Documents/toolchain/SpiNeMap/test_apps/image_processing/
+ApplicationLocation : /home/adarsha/NeuroXplore/toolchain/NeuroXplore/test_apps/tensorflow/leNet/
+
+#####################################################################################################
+# CLUSTERING
+#####################################################################################################
+
+# provide the name used in the CARLsim Makefile. 
+Clustering : False
+ClusterSize : 128
+UnrollFanin : 2
+ClusteringAlgorithm : min-clusters
+
+#####################################################################################################
+# Mapping
+#####################################################################################################
+
+# provide the name used in the CARLsim Makefile. 
+# dimension of noxim array
+Mapping : False
+NetworkType : MESH
+Xdim : 5
+Ydim : 5
+FlitSize : 32
+RoutingAlgorithm : XY
+
