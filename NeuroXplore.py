@@ -182,42 +182,51 @@ if __name__ == "__main__":
             #CARLsimExecute.wait()
            
             print("[INFO]: Application Executed on Noxim.")
-    
+
+
+######################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+
+                                                                            # Tensorflow
+            
+######################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################################
+
     elif SimulationTool == 'tensorflow':
         # Execute the CARLsim application:
         TensorflowExecute = subprocess.Popen(['snntoolbox', '-t', ApplicationLocation+'config'], cwd=ApplicationLocation, stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
         TensorflowExecute.wait()
         printSimLogs(TensorflowExecute)
         
-        SpikeInfo = subprocess.Popen(['python3', 'extract_spike_times.py', ApplicationLocation+'log/gui/test/log_vars/', '../'], cwd='Parser/Parser-Tensorflow/spike_info', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        SpikeInfo = subprocess.Popen(['python3', 'extract_spike_times.py', ApplicationLocation, '../output/'], cwd='Parser/Parser-Tensorflow/spike_info', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
         SpikeInfo.wait()
 
         
         print("[INFO]: SpikeInfo extracted.")
         
         
-        ConnectionInfo = subprocess.Popen(['./ncc', 'example/'+ApplicationName+'.json', 'example/'+ApplicationName+'.h5'], cwd="./Parser/Parser-Tensorflow/connection_info", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        ConnectionInfo = subprocess.Popen(['./ncc', ApplicationLocation+ApplicationName+'.json', ApplicationLocation+ApplicationName+'.h5'], cwd="./Parser/Parser-Tensorflow/connection_info", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
         ConnectionInfo.wait()
         print("[INFO]: ConnectionInfo extracted.")
 
 
         # copy connection info to parser location
-        CopyInfo = subprocess.Popen(['cp', './Parser/Parser-Tensorflow/connection_info/example/'+ApplicationName+'.connection_info.txt', './Parser/Parser-Tensorflow/connection_info.txt'], cwd='./', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
-        CopyInfo.wait()
+        #CopyInfo = subprocess.Popen(['cp', './Parser/Parser-Tensorflow/connection_info/example/'+ApplicationName+'.connection_info.txt', './Parser/Parser-Tensorflow/connection_info.txt'], cwd='./', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        #CopyInfo.wait()
         
-        formatInfo = subprocess.Popen(['python', 'format.py', './', '../'], cwd='Parser/Parser-Tensorflow', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+        formatInfo = subprocess.Popen(['python3', 'parser.py', './output/', './output/'], cwd='Parser/Parser-Tensorflow', stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
         #formatInfo.wait()
 
         if Clustering == 'True':
             # Cluster neurons and synapses of application:
-            Clustering = subprocess.Popen(['./clustering', '--conn-file', '../Parser/connection_info.txt', '--spike-file', '../Parser/spike_info.txt', '--unroll-fanin', str(UnrollFanin), '--cluster-crossbar-size', str(ClusterSize), '--clustering-algo', ClusteringAlgorithm, '--cluster-stats', 'input_next_layer.txt', '--cluster-ir-out', 'cluster.ir'], cwd="./SNNPartitioning/", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+            Clustering = subprocess.Popen(['./ext', '--conn-file', '../Parser/Parser-Tensorflow/output/connection_info.txt', '--spike-file', '../Parser/Parser-Tensorflow/output/spike_info.txt', '--unroll-fanin', str(UnrollFanin), '--cluster-crossbar-size', str(ClusterSize), '--clustering-algo', ClusteringAlgorithm, '--cluster-stats', 'input_next_layer.txt', '--cluster-ir-out', 'cluster.ir'], cwd="./SNNPartitioning/", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
             #CARLsimExecute.wait()
 
         print("[INFO]: Model Unrolling and Clustering completed.")
         
         if Mapping == 'True':
             # place the clusters on to the nodes of Noxim using PSO:
-            Placement = subprocess.Popen(['python', 'placer.py', '../../SNNPartitioning/input_next_layer.txt', './'], cwd=localPath+"/SNNPlacer/pso", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+            Placement = subprocess.Popen(['python', 'placer.py', '../../SNNPartitioning/input_next_layer.txt', './', str(Xdim), str(Ydim)], cwd=localPath+"/SNNPlacer/pso", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+            
+            
             # wait for the completion of the application execution. (Generate the carlsim.log) 
             print("[INFO]: Partition information Read.")
             print("[INFO]: Traffic File Created.")
@@ -228,8 +237,10 @@ if __name__ == "__main__":
             Placement.wait()
     
             # Simulate application on Noxim:
-            NoximExecute = subprocess.Popen(['./noxim'], cwd="./snnNoxim/bin", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=0)
+            NoximExecute = subprocess.Popen(['./noxim', '>>', ApplicationName+'.out'], cwd="./snnNoxim/bin", stdin =subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, bufsize=100)
+            (output, err) = NoximExecute.communicate()
+            print("[INFO]: Application Executed on Noxim.")
+            print(output)
             # wait for the completion of the application execution. (Generate the carlsim.log) 
             #CARLsimExecute.wait()
            
-            print("[INFO]: Application Executed on Noxim.")

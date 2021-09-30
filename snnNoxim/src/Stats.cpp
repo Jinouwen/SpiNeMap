@@ -39,7 +39,7 @@ void Stats::receivedFlit(const double arrival_time,
 
         double receiving_time =  arrival_time - warm_up_time;
 
-        if (GlobalParams::output_mode != EX_STAT_MODE){
+        if (GlobalParams::output_mode == EX_STAT_MODE){
             int i = searchCommHistory(flit.src_id);
 
             if (i == -1) {

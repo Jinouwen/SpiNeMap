@@ -46,7 +46,6 @@ for line in lines:
     line_array = line.strip().split()
     sourceNeuron = int(line_array[0])
     destinationNeurons = line_array[1:]
-    print(line_array, destinationNeurons)
     if sourceNeuron not in cnrn:
         cnrn.append(sourceNeuron)
 
@@ -63,28 +62,26 @@ itr = 0
 while itr < len(lines):
     line = lines[itr]
     line_array = line.strip().split(' ')
-    print(line_array) 
     if(len(line_array) == 1):
-        print('Reached here')
         itr = itr+1
         line = lines[itr]
         line_array = line.strip().split(' ')
-
-    sourceNeuron = int(line_array[0])
-    itr = itr+1
-    line = lines[itr]
-    line_array = line.strip().split()
-    if len(line_array) != 0: 
-        if sourceNeuron in snrn.keys():
-            for i in range(len(line_array)):
-                print(line_array[i])
-                snrn[sourceNeuron].append(int(line_array[i]))
-        else:
-            #print(map(int, line_array[1:-1]))
-            snrn[sourceNeuron] = map(int, line_array)
-    else: 
-        snrn[sourceNeuron] = ' '
-    itr = itr+1
+    
+    if itr < len(lines) - 1:
+        sourceNeuron = int(line_array[0])
+        itr = itr+1
+        line = lines[itr]
+        line_array = line.strip().split()
+        if len(line_array) != 0: 
+            if sourceNeuron in snrn.keys():
+                for i in range(len(line_array)):
+                    snrn[sourceNeuron].append(int(line_array[i]))
+            else:
+                #print(map(int, line_array[1:-1]))
+                snrn[sourceNeuron] = map(int, line_array)
+        else: 
+            snrn[sourceNeuron] = ' '
+        itr = itr+1
 
 fp.close()
 

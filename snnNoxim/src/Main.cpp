@@ -20,6 +20,8 @@
 #include "Utils.h"
 #include <stdio.h>
 #include <time.h>
+#include <iostream>
+#include <fstream>
 
 #include <csignal>
 
@@ -191,6 +193,7 @@ int sc_main(int arg_num, char *arg_vet[]) {
     if (GlobalParams::trace_mode)
         sc_close_vcd_trace_file(tf);
     if (GlobalParams::output_mode == EX_STAT_MODE) {
+        
         if (GlobalParams::network_type == "SEGMENT") {
             cout << "IMEC Segmented Bus Simulation completed.\n";
             cout << " ##Designed by Yuefeng Wu @ imec NL##\n";
@@ -207,8 +210,16 @@ int sc_main(int arg_num, char *arg_vet[]) {
 
         if (GlobalParams::network_type == "MESH") {
             GlobalStats gs(n);
-            gs.showStats(std::cout, GlobalParams::detailed);
+            
+            ofstream myfile;
 
+            myfile.open("output.txt");
+            myfile << gs.getAverageNetworkDelay();
+            myfile << "\n";
+            myfile << gs.getDynamicPower();
+            myfile.close();
+
+            gs.showStats(std::cout, GlobalParams::detailed);
             if ((GlobalParams::max_volume_to_be_drained > 0) &&
                 (sc_time_stamp().to_double() / GlobalParams::clock_period_ps -
                      GlobalParams::reset_time >=

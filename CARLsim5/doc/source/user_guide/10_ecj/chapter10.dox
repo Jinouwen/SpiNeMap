@@ -1,0 +1,38 @@
+/*!
+
+\page ch10_ecj Chapter 10: ECJ
+
+\tableofcontents
+
+\section ch10s1_overview CARLsim-ECJ Parameter-Tuning Framework Overview
+
+CARLsim provides a software interface for exposing the parameters of a model 
+an external process so that they can be automatically tune to maximize some 
+measure of fitness.  The parameter-tuning interface (PTI) is generic, but is 
+built specifically to be compatible with the ECJ framework—an evolutionary 
+computation framework written in Java (Scott and Luke, 2019).
+
+We find that an automated tuning framework becomes
+increasingly useful as our SNN models become more complex. Evolutionary 
+Algorithms (EAs) enable flexible parameter tuning by means of optimizing a 
+generic fitness function. The first version of the automated parameter-tuning
+framework used an EA library called Evolving Objects (EO) as the EA engine 
+(Carlson et al., 2014). ECJ was chosen to supercede EO because it is under 
+active development (Linux), supports multi-threading and distribution, has 
+excellent documentation, and implements a variety of EAs (Scott and Luke, 
+2019).
+
+You can find complete examples of Experiment.run() implementations in 
+\ref tut7_pti and in the `tools/pti/examples` directory of the CARLsim source
+tree.
+
+\since v3.0
+
+\section ch10_references References
+
+Scott, E. and Luke, S., ECJ at 20: toward a general metaheuristics toolkit. 
+Proceedings of the Genetic and Evolutionary Computation Conference Companion 
+(GECCO), 1391-1398, 2019.
+
+
+*/

@@ -1,13 +1,13 @@
 ##### LIBRARIES CONFIGURATION #####
 
-SYSTEMC := /home/disco-toolchain/Documents/toolchain/systemc
-YAML    := /usr/local
+SYSTEMC := /home/adarsha/.local/systemc-2.3.1
+YAML    := /home/adarsha/.local
 
 
 ##### DIRECTORIES #####
 
 #SYSTEMC_LIBS := $(wildcard $(SYSTEMC)/lib-*)
-SYSTEMC_LIBS := /home/disco-toolchain/Documents/toolchain/systemc/lib-linux64
+SYSTEMC_LIBS := /home/adarsha/.local/systemc-2.3.1/lib-linux64
 
 SRCDIR  := ../src
 SUBDIRS := $(filter %/,$(wildcard $(SRCDIR)/*/))

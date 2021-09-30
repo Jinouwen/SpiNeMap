@@ -12,7 +12,7 @@
 #include <stack>
 #include <unordered_map>
 #include <vector>
-
+#include <map>
 // #include <boost/functional/hash.hpp>
 
 #include "unroll/unroll.hh"
@@ -38,6 +38,7 @@ class Neuron_Status
     boost::multiprecision::cpp_int num_spikes;
 
     std::set<UINT64> connected_clusters;
+    std::set<UINT64> *spike_times;
 
   protected:
     UINT64 id;
@@ -57,6 +58,13 @@ class Neuron_Status
 
     auto getParentId() { return parent_id; }
     void setParentId(UINT64 _id) { parent_id = _id; }
+
+    void setSpikeTimes(std::set<UINT64> *_spike_times)
+    {
+        spike_times = _spike_times;
+    }
+
+    auto &getSpikeTimes() { return *spike_times; }
 };
 
 class Cluster
@@ -257,6 +265,61 @@ class Clusters
 
         for (auto &cluster : clusters)
         {
+            UINT64 cid = cluster->getClusterId();
+
+            auto outputs = cluster->getOutputsListRef();
+            std::map<UINT64, std::vector<UINT64>> cid_to_neu_id;
+
+            for (auto &conn_cluster : cluster->getConnectedClustersOutRef())
+            {
+                for (auto output : outputs)
+                {
+                    auto &conn_clusters = neuron_status[output].getConnectedClustersRef();
+                    if (auto iter = conn_clusters.find(conn_cluster);
+                            iter != conn_clusters.end())
+                    {
+                        if (auto map_iter = cid_to_neu_id.find(conn_cluster);
+                                map_iter != cid_to_neu_id.end())
+                        {
+                            map_iter->second.push_back(output);
+                        }
+                        else
+                        {
+                            std::vector<UINT64> tmp = {output};
+                            cid_to_neu_id.insert({conn_cluster, tmp});
+                        }
+                    }
+                }
+            }
+
+            for (auto [conn_cluster, outputs] : cid_to_neu_id)
+            {
+                file << cluster->getClusterId() << " "
+                     << conn_cluster << " ";
+                std::set<UINT64> spike_times;
+                // std::vector<UINT64> spike_times_all;
+                for (auto output : outputs)
+                {
+                    for (auto spike_time : 
+                             neuron_status[output].getSpikeTimes())
+                    {
+                        // file << spike_time << " ";
+                        spike_times.insert(spike_time);
+                        // spike_times_all.push_back(spike_time);
+                    }
+                }
+                
+                // std::sort(spike_times_all.begin(), spike_times_all.end(),
+                //           [](auto &left, auto&right) {return left < right; });
+                for (auto spike_time : spike_times)
+                {
+                    file << spike_time << " ";
+                }
+                
+                file << "\n";
+            }
+
+            /*
             auto &io_mappings = cluster->getIOMappings();
             auto &inputs = cluster->getInputsListRef();
             for (auto input : inputs)
@@ -275,7 +338,7 @@ class Clusters
                          << neuron_status[output].getParentId() << "\n";
                 }
             }
-            /*
+
             UINT64 cid = cluster->getClusterId();
 
             unsigned num_inputs = cluster->getInputsListRef().size();
@@ -368,8 +431,10 @@ class Clusters
         for (auto cid = 0; cid < clusters.size(); cid++)
         {
             // std::vector<UINT64> neighbors;
-            // for (auto id : clusters[cid]->getConnectedClustersOutRef()) {neighbors.push_back(id);}
-            // for (auto id : clusters[cid]->getConnectedClustersInRef()) {neighbors.push_back(id);}
+            // for (auto id : clusters[cid]->getConnectedClustersOutRef()) 
+            // {neighbors.push_back(id);}
+            // for (auto id : clusters[cid]->getConnectedClustersInRef()) 
+            // {neighbors.push_back(id);}
 
             if (visited[cid] == false)
             // if ((visited[cid] == false) && (neighbors.size() > 0))
@@ -388,7 +453,8 @@ class Clusters
             {
                 for (auto ele : c)
                 {
-                    auto &conn_clusters_out = clusters[ele]->getConnectedClustersOutRef();
+                    auto &conn_clusters_out = 
+                        clusters[ele]->getConnectedClustersOutRef();
                     if (conn_clusters_out.size() == 0)
                     {
                         auto &outputs = clusters[ele]->getOutputsListRef();
@@ -436,15 +502,17 @@ class Clusters
                     addConnectedCluster(clusters[new_cid]->getClusterId());
                 clusters[new_cid]->addOutput(new_neuron_id);
 
-                if (auto mapping_iter = clusters[new_cid]->getIOMappings().find(neuron_to_connect);
-                        mapping_iter != clusters[new_cid]->getIOMappings().end())
+                if (auto mapping_iter = 
+                    clusters[new_cid]->getIOMappings().find(neuron_to_connect);
+                    mapping_iter != clusters[new_cid]->getIOMappings().end())
                 {
                     (mapping_iter->second).push_back(neuron_to_connect);
                 }
                 else
                 {
                     std::vector<UINT64> outs = {neuron_to_connect};
-                    clusters[new_cid]->getIOMappings().insert({neuron_to_connect, outs});
+                    clusters[new_cid]->getIOMappings().insert({neuron_to_connect, 
+                                                               outs});
                 }
 
 
@@ -464,10 +532,13 @@ class Clusters
 
             for (auto &output : cluster->getOutputsListRef())
             {
-                for (auto &conn_cluster : neuron_status[output].getConnectedClustersRef())
+                for (auto &conn_cluster : 
+                    neuron_status[output].getConnectedClustersRef())
                 {
-                    cluster->addNumSpikesOut(conn_cluster, neuron_status[output].numOfSpikes());
-                    // clusters[conn_cluster]->addNumSpikesIn(neuron_status[output].numOfSpikes());
+                    cluster->addNumSpikesOut(conn_cluster, 
+                        neuron_status[output].numOfSpikes());
+                    // clusters[conn_cluster]->addNumSpikesIn(
+                    // neuron_status[output].numOfSpikes());
                 }
             }
         }
@@ -495,8 +566,10 @@ class Clusters
             c.push_back(v);
 
             std::vector<UINT64> neighbors;
-            for (auto id : clusters[v]->getConnectedClustersOutRef()) {neighbors.push_back(id);}
-            for (auto id : clusters[v]->getConnectedClustersInRef()) {neighbors.push_back(id);}
+            for (auto id : clusters[v]->getConnectedClustersOutRef()) 
+            {neighbors.push_back(id);}
+            for (auto id : clusters[v]->getConnectedClustersInRef()) 
+            {neighbors.push_back(id);}
 
             for (auto neighbor : neighbors)
             {
@@ -514,9 +587,11 @@ class Clusters
         {
             std::cout << "Cluster ID: " << cluster->getClusterId() << "\n";
             std::cout << "Input Neurons: ";
-            for (auto &input : cluster->getInputsListRef()) { std::cout << input << " "; }
+            for (auto &input : cluster->getInputsListRef()) 
+            { std::cout << input << " "; }
             std::cout << "\nOutput Neurons: ";
-            for (auto &output : cluster->getOutputsListRef()) { std::cout << output << " "; }
+            for (auto &output : cluster->getOutputsListRef()) 
+            { std::cout << output << " "; }
             std::cout << "\nNumber of synapses: " << cluster->numSynapses();
             std::cout << "\nConnected Clusters: ";
             for (auto &conn_cluster : cluster->getConnectedClustersOutRef())

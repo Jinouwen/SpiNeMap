@@ -1,9 +1,9 @@
 SOURCE  := main.cc
 SOURCE  += $(shell find include/ -name "*.cc")
 CC      := g++
-FLAGS   := -O3 -std=c++17 -w -Iinclude
-LD      := -lboost_program_options 
-TARGET  := clustering
+FLAGS   := -O3 -std=c++17 -w -I include
+LD      := -lboost_program_options -lpthread
+TARGET  := ext
 OUT	:= out
 
 all: $(TARGET)

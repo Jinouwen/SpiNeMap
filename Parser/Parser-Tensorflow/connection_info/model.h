@@ -26,7 +26,6 @@ class Model
         // https://towardsdatascience.com/a-comprehensive-introduction-to-different-types-of-convolutions-in-deep-learning-669281e58215
 	// https://medium.com/@zurister/depth-wise-convolution-and-depth-wise-separable-convolution-37346565d4ec
 	// https://machinelearningmastery.com/introduction-to-1x1-convolutions-to-reduce-the-complexity-of-convolutional-neural-networks/
-
         // Batch-normalization: https://stackoverflow.com/questions/38553927/batch-normalization-in-convolutional-neural-network
         enum class Layer_Type : int
         {
@@ -148,6 +147,11 @@ class Model
         void connToFlat(unsigned, unsigned);
         void connToDense(unsigned, unsigned);
 
+        void layerOutput();
+
+        std::ofstream conns_output;
+        std::ofstream weights_output;
+
       public:
         Architecture() {}
 
@@ -171,6 +175,8 @@ class Model
 
         void printConns(std::string &out_root);
 
+        void setOutRoot(std::string &out_root);
+
         void printLayers() // Only used for small network debuggings.
         {
             for (auto &layer : layers)
@@ -179,15 +185,24 @@ class Model
                 auto type = layer.layer_type;
 
                 std::cout << "Layer name: " << name << "; ";
-                if (type == Layer::Layer_Type::Input) { std::cout << "Layer type: Input"; }
-		else if (type == Layer::Layer_Type::Conv2D) { std::cout << "Layer type: Conv2D"; }
-                else if (type == Layer::Layer_Type::Activation) { std::cout << "Layer type: Activation"; }
-                else if (type == Layer::Layer_Type::BatchNormalization) { std::cout << "Layer type: BatchNormalization"; }
-                else if (type == Layer::Layer_Type::Dropout) { std::cout << "Layer type: Dropout"; }
-                else if (type == Layer::Layer_Type::MaxPooling2D) { std::cout << "Layer type: MaxPooling2D"; }
-                else if (type == Layer::Layer_Type::AveragePooling2D) { std::cout << "Layer type: AveragePooling2D"; }
-                else if (type == Layer::Layer_Type::Flatten) { std::cout << "Layer type: Flatten"; }
-                else if (type == Layer::Layer_Type::Dense) { std::cout << "Layer type: Dense"; }
+                if (type == Layer::Layer_Type::Input) 
+                { std::cout << "Layer type: Input"; }
+		else if (type == Layer::Layer_Type::Conv2D) 
+                { std::cout << "Layer type: Conv2D"; }
+                else if (type == Layer::Layer_Type::Activation) 
+                { std::cout << "Layer type: Activation"; }
+                else if (type == Layer::Layer_Type::BatchNormalization) 
+                { std::cout << "Layer type: BatchNormalization"; }
+                else if (type == Layer::Layer_Type::Dropout) 
+                { std::cout << "Layer type: Dropout"; }
+                else if (type == Layer::Layer_Type::MaxPooling2D)
+                { std::cout << "Layer type: MaxPooling2D"; }
+                else if (type == Layer::Layer_Type::AveragePooling2D)
+                { std::cout << "Layer type: AveragePooling2D"; }
+                else if (type == Layer::Layer_Type::Flatten) 
+                { std::cout << "Layer type: Flatten"; }
+                else if (type == Layer::Layer_Type::Dense) 
+                { std::cout << "Layer type: Dense"; }
                 else { std::cerr << "Error: unsupported layer type\n"; exit(0); }
                 std::cout << "\n";
 /*
@@ -237,13 +252,16 @@ class Model
                     std::cout << "\n";
                 }
 
-                std::cout << "Total params: " << weights.size() + bias.size() << "\n";
+                std::cout << "Total params: " 
+                          << weights.size() + bias.size() << "\n";
 
                 std::cout << "\n";
                 // TODO, print neuron ID range
                 // auto &out_neuro_ids = layer.output_neuron_ids;
                 // std::cout << "Output neuron id range: "
-                //           << out_neuro_ids[0] << " -> " << out_neuro_ids[out_neuro_ids.size() - 1] << "\n\n";
+                //           << out_neuro_ids[0] << " -> " 
+                //           << out_neuro_ids[out_neuro_ids.size() - 1] 
+                //           << "\n\n";
 /*
                 auto &out_neuro_ids = layer.output_neuron_ids;
                 std::cout << "Output neuron id: ";
@@ -254,8 +272,9 @@ class Model
                     {
                         for (int j = 0; j < output_dims[1]; j++)
                         {
-                            std::cout << out_neuro_ids[k * output_dims[0] * output_dims[1] + 
-                                                       i * output_dims[1] + j] << " ";
+                            std::cout << out_neuro_ids[
+                                k * output_dims[0] * output_dims[1] + 
+                                i * output_dims[1] + j] << " ";
                         }
                         std::cout << "\n";
                     }
@@ -283,6 +302,9 @@ class Model
     void connector() { arch.connector(); } 
 
     void printConns(std::string &out_root) { arch.printConns(out_root); }
+
+    void setOutRoot(std::string &out_root) 
+    { arch.setOutRoot(out_root); }
 
   protected:
     void loadArch(std::string &arch_file);

@@ -154,7 +154,7 @@ dim_x: 5
 dim_y: 5
 flit_size: 32
 routing_algorithm: XY
-traffic_filename: "/home/adarsha/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/traffic.txt"
-neuron_node_filename: "/home/adarsha/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/node_mapping.txt"
-neural_network_filename: "/home/adarsha/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/connection_table.txt"
+traffic_filename: "/home/adarsha/Research/toolchain/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/traffic.txt"
+neuron_node_filename: "/home/adarsha/Research/toolchain/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/node_mapping.txt"
+neural_network_filename: "/home/adarsha/Research/toolchain/NeuroXplore/toolchain/NeuroXplore/SNNPlacer/pso/connection_table.txt"
 cluster_traffic: false

@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set>
 
 namespace EXT
 {
@@ -30,6 +31,8 @@ class Neuron
 
     std::vector<UINT64> children; // All the intermediate neurons it unrolls
 
+    std::set<UINT64> spike_times;
+
   public:
     Neuron() {}
     Neuron(UINT64 _id) : neuron_id(_id) {}
@@ -37,6 +40,7 @@ class Neuron
                                   input_neurons(_copy.input_neurons),
                                   output_neurons(_copy.output_neurons),
                                   num_spikes(_copy.num_spikes),
+                                  spike_times(_copy.spike_times),
                                   parent(_copy.parent),
                                   children(_copy.children) {}
 
@@ -67,6 +71,12 @@ class Neuron
             std::cerr << "addNumSpikesFromOneInput: overflow detected." << std::endl;
             exit(0);
         }
+    }
+
+    auto& getSpikeTimes() { return spike_times; }
+    void setSpikeTimes(std::set<UINT64> &_spike_times)
+    {
+        spike_times = _spike_times;
     }
     void setNumSpikes(boost::multiprecision::cpp_int _num_spikes)
     {
@@ -100,9 +110,11 @@ class Neuron
     {
         std::cout << "Neuron ID: " << neuron_id << "\n";
         std::cout << "Input Neuron IDs: ";
-        for (auto &input : input_neurons) { std::cout << input << " "; } std::cout << "\n";
+        for (auto &input : input_neurons) 
+        { std::cout << input << " "; } std::cout << "\n";
         std::cout << "Output Neuron IDs: ";
-        for (auto &output : output_neurons) { std::cout << output << " "; } std::cout << "\n";
+        for (auto &output : output_neurons) 
+        { std::cout << output << " "; } std::cout << "\n";
         std::cout << "\n";
     }
 };

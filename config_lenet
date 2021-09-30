@@ -7,18 +7,17 @@
 # provide the name used in the CARLsim Makefile. 
 Simulation : True
 SimulationTool : tensorflow
-ApplicationName : LeNet
-# ApplicationLocation : /home/disco-toolchain/Documents/toolchain/SpiNeMap/test_apps/image_processing/
-ApplicationLocation : /home/adarsha/NeuroXplore/toolchain/NeuroXplore/test_apps/tensorflow/leNet/
+ApplicationName : lenet
+ApplicationLocation : /home/adarsha/Research/toolchain/NeuroXplore/toolchain/NeuroXplore/test_apps/tensorflow/leNet
 
 #####################################################################################################
 # CLUSTERING
 #####################################################################################################
 
 # provide the name used in the CARLsim Makefile. 
-Clustering : False
+Clustering : True
 ClusterSize : 128
-UnrollFanin : 2
+UnrollFanin : 127
 ClusteringAlgorithm : min-clusters
 
 #####################################################################################################
@@ -27,7 +26,7 @@ ClusteringAlgorithm : min-clusters
 
 # provide the name used in the CARLsim Makefile. 
 # dimension of noxim array
-Mapping : False
+Mapping : True
 NetworkType : MESH
 Xdim : 5
 Ydim : 5

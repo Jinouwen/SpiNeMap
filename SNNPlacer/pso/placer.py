@@ -12,8 +12,6 @@ import os
 #config
 networkType = 'MESH'
 flitSize = 32
-dimX = 5
-dimY = 5
 # Global variables
 #local path
 localPath = os.path.dirname(os.path.abspath(__file__))
@@ -149,20 +147,23 @@ def testFormat(argv):
 
     if len(argv) > 1:
         if argv[1] == '-h':
-            print('log_parser.py <inputfile> <outputFilePath>')
+            print('placer.py <inputfile> <outputFilePath>')
             sys.exit()
 
-    if(len(argv) != 3):
-        print('Input format is ---> python<v> log_parser.py <inputfile> <outputfilePath>')
+    if(len(argv) != 5):
+        print('Input format is ---> python<v> placer.py <inputfile> <outputfilePath> <dimX> <dimY>')
         sys.exit(2)
 
     else:
         inputfile = argv[1]
         outputfile = argv[2]
+        dimX = int(argv[3])
+        dimY = int(argv[4])
+
 
     print('Input file is "', inputfile)
     print('Output file is "', outputfile)
-    return inputfile, outputfile
+    return inputfile, outputfile, dimX, dimY
 
 
 
@@ -173,7 +174,7 @@ def testFormat(argv):
 ###################################################################################################################
 
 if __name__ == "__main__":
-    inputFile, outputFilePath = testFormat(sys.argv)
+    inputFile, outputFilePath, dimX, dimY = testFormat(sys.argv)
 
     logFile = open(inputFile, 'r')
     logFileLine = logFile.readlines()
@@ -194,7 +195,7 @@ if __name__ == "__main__":
     onmfname = outputFilePath+'node_mapping.txt'
     onmfp = open(onmfname, 'w')
 
-    generateNodeMappingInfo(onmfp, clusters, 20)
+    generateNodeMappingInfo(onmfp, clusters, dimX*dimY)
     print("STATUS: Node to node mapping table generated.")
 
     configTemplate = 'config.yaml.tmpl'

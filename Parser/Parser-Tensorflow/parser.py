@@ -22,7 +22,7 @@ def testFormat(argv):
             sys.exit()
 
     if(len(argv) != 3):
-        print('Input format is ---> python<v> parser.py <inputfilePath> <outputfilePath>')
+        print('Input format is ---> python<v> parser.py <inputfileDir> <outputfileDir>')
         sys.exit(2)
 
     else:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     inputFilePath, outputFilePath = testFormat(sys.argv)
     arch = sys.argv[1]
 
-    sfname = inputFilePath+'spike_info.txt'
+    sfname = inputFilePath+'extracted_spike_info.txt'
     cfname = inputFilePath+'connection_info.txt'
 
     sf = open(sfname, 'r')
@@ -62,7 +62,6 @@ if __name__ == "__main__":
 
         line = line.strip().split()
         array.append(int(line[0]))
-        print(line)
     line = sf.readline()
     flag=0
 
