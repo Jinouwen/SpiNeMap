@@ -1,6 +1,7 @@
 #ifndef __MODEL_H__
 #define __MODEL_H__
 
+#include <boost/multiprecision/cpp_int.hpp> 
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -10,10 +11,13 @@
 
 #include "hdf5.h"
 
+#include <boost/property_tree/ptree.hpp>
+
 namespace NCC
 {
 namespace NCC_FrontEnd
 {
+
 #define MAX_NAME 1024
 class Model
 {
@@ -38,8 +42,14 @@ class Model
             AveragePooling2D,
             Flatten, // flatten layer
             Dense, // dense (fully-connected) layer
+            Ignore,
+            Concatenate,
             MAX
         }layer_type = Layer_Type::MAX;
+
+
+        // Lacking:
+        // ZeroPadding2D, Concatenate for DenseNet
 
         Layer() {}
         Layer(std::string &_name, Layer_Type &_type) : name(_name), layer_type(_type) {}
@@ -84,8 +94,14 @@ class Model
         {
             output_dims = _dims;
         }
+        void setDepth(uint64_t _depth) { depth = _depth; }
+        int getDepth() { return depth; };
 
         std::string name; // Name of the layer
+
+        std::vector<std::string> inbound_layers;
+        std::vector<std::string> outbound_layers;
+        uint64_t depth = -1;
 
         // weights/biases for CONV2D/Dense
         std::vector<unsigned> w_dims; // dims of the weights
@@ -160,7 +176,7 @@ class Model
             layers.emplace_back(_name, _type);
         }
 
-        Layer& getLayer(std::string &name)
+        Layer& getLayer(const std::string &name)
         {
             for (auto &layer : layers)
             {
@@ -172,8 +188,10 @@ class Model
         }
 
         void connector();
+        void connectLayers();
 
         void printConns(std::string &out_root);
+        void printLayerConns(std::string &out_root);
 
         void setOutRoot(std::string &out_root);
 
@@ -187,7 +205,7 @@ class Model
                 std::cout << "Layer name: " << name << "; ";
                 if (type == Layer::Layer_Type::Input) 
                 { std::cout << "Layer type: Input"; }
-		else if (type == Layer::Layer_Type::Conv2D) 
+		        else if (type == Layer::Layer_Type::Conv2D) 
                 { std::cout << "Layer type: Conv2D"; }
                 else if (type == Layer::Layer_Type::Activation) 
                 { std::cout << "Layer type: Activation"; }
@@ -203,6 +221,8 @@ class Model
                 { std::cout << "Layer type: Flatten"; }
                 else if (type == Layer::Layer_Type::Dense) 
                 { std::cout << "Layer type: Dense"; }
+                else if (type == Layer::Layer_Type::Ignore) 
+                { std::cout << "Layer type: Ignore"; }
                 else { std::cerr << "Error: unsupported layer type\n"; exit(0); }
                 std::cout << "\n";
 /*
@@ -286,6 +306,10 @@ class Model
                 // exit(0);
             }
         }
+        void labelLayerWithDepth(uint64_t starting_depth, std::set<std::string>&);
+        void outputLayerDepthIR(const std::string&);
+        void printLayerConnDepth(const std::string&);
+        std::pair<uint64_t, uint64_t> getIrregularMetric();
     };
 
     Architecture arch;
@@ -294,7 +318,14 @@ class Model
     Model(std::string &arch_file, std::string &weight_file)
     {
         loadArch(arch_file);
-        loadWeights(weight_file);
+        if (weight_file != "") {
+            loadWeights(weight_file);
+        }
+    }
+
+    Model(std::string &arch_file)
+    {
+        loadArch(arch_file);
     }
 
     void printLayers() { arch.printLayers(); }
@@ -302,12 +333,16 @@ class Model
     void connector() { arch.connector(); } 
 
     void printConns(std::string &out_root) { arch.printConns(out_root); }
+    void printLayerConns(std::string &out_root) {arch.printLayerConns(out_root); }
+    void outputLayerDepthIR(std::string &out_file) {arch.outputLayerDepthIR(out_file);}
+    std::pair<uint64_t, uint64_t> getIrregularMetric() { return arch.getIrregularMetric();}
 
     void setOutRoot(std::string &out_root) 
     { arch.setOutRoot(out_root); }
 
   protected:
     void loadArch(std::string &arch_file);
+    void loadArch2(std::string &arch_file); //Shihao's boost::ptree version
     void loadWeights(std::string &weight_file);
 
   protected:

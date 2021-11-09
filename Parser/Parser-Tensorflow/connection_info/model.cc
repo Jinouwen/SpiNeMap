@@ -4,6 +4,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/foreach.hpp>
+#include "nlohmann/json.hpp"
 
 #include <sstream>
 
@@ -15,6 +16,14 @@ namespace NCC
 {
 namespace NCC_FrontEnd
 {
+
+using json = nlohmann::json;
+
+void Model::Architecture::connectLayers() 
+{
+    int prev = 0;
+}
+
 void Model::Architecture::connector()
 {
     int prev = 0;
@@ -36,7 +45,7 @@ void Model::Architecture::connector()
             prev = i + 1;
         }
         /*
-	else if (layers[i + 1].layer_type == Layer::Layer_Type::Activation)
+	    else if (layers[i + 1].layer_type == Layer::Layer_Type::Activation)
         {
             connToAct(prev, i + 1); prev++;
         }
@@ -49,24 +58,28 @@ void Model::Architecture::connector()
             connToDrop(prev, i + 1); prev++;
         }
         */
-	else if (layers[i + 1].layer_type == Layer::Layer_Type::MaxPooling2D || 
+	    else if (layers[i + 1].layer_type == Layer::Layer_Type::MaxPooling2D || 
             layers[i + 1].layer_type == Layer::Layer_Type::AveragePooling2D)
         {
             connToPool(prev, i + 1); prev = i + 1;
         }
-	else if (layers[i + 1].layer_type == Layer::Layer_Type::Flatten)
+	    else if (layers[i + 1].layer_type == Layer::Layer_Type::Flatten)
         {
             connToFlat(prev, i + 1); prev = i + 1;
         }
-	else if (layers[i + 1].layer_type == Layer::Layer_Type::Dense)
+	    else if (layers[i + 1].layer_type == Layer::Layer_Type::Dense)
         {
             connToDense(prev, i + 1); prev = i + 1;
         }
-        // else
-        // {
-        //     std::cerr << "Error: unsupported connection type. \n";
-        //     exit(0);
-        // }
+        else if (layers[i + 1].layer_type == Layer::Layer_Type::Ignore)
+        {
+            //Do nothing
+        }
+        else
+        {
+            std::cerr << "Error: unsupported connection type. \n";
+            exit(0);
+        }
 
         /*
         auto name = layers[i].name;
@@ -101,6 +114,7 @@ void Model::Architecture::connector()
         */
     }
 }
+
 
 void Model::Architecture::connToConv(unsigned cur_layer_id, 
                                      unsigned next_layer_id)
@@ -653,19 +667,14 @@ void Model::Architecture::setOutRoot(std::string &out_root)
     weights_output.open(weights_out_txt);
 }
 
-void Model::Architecture::layerOutput()
-{
-
-}
-
 // TODO, we may need to break down the protobuf into multiple smaller files.
 void Model::Architecture::printConns(std::string &out_root)
 {
     // Txt record
-    std::string conns_out_txt = out_root + "connection_info.txt";
+    std::string conns_out_txt = out_root + ".connection_info.txt";
     std::ofstream conns_out(conns_out_txt);
 
-    std::string weights_out_txt = out_root + "weight_info.txt";
+    std::string weights_out_txt = out_root + ".weight_info.txt";
     std::ofstream weights_out(weights_out_txt);
 
     for (int i = 0; i < layers.size() - 1; i++)
@@ -770,7 +779,288 @@ void Model::Architecture::printConns(std::string &out_root)
     */
 }
 
-void Model::loadArch(std::string &arch_file)
+void Model::loadArch(std::string &arch_file_path)
+{
+    try
+    {
+        std::ifstream arch_file(arch_file_path);
+        json js;
+        arch_file >> js;
+        auto json_layers = js["config"]["layers"];
+
+        unsigned layer_counter = 0;
+        std::unordered_map<std::string, std::vector<std::string>> concat_input;
+
+
+        for (auto& layer: json_layers) {
+            if (layer_counter == 0)
+            {
+                std::vector<std::string> input_shape;
+                std::vector<unsigned> output_dims;
+                for (auto &cell: layer["config"]["batch_input_shape"])
+                {
+                    if (cell == nlohmann::detail::value_t::null) cell = 0; 
+                    output_dims.push_back(cell);
+                }
+
+                output_dims.erase(output_dims.begin()); //Delete the first null (see json for more details)
+               
+                std::string name = "input";
+                Layer::Layer_Type layer_type = Layer::Layer_Type::Input;
+                arch.addLayer(name, layer_type);
+                arch.getLayer(name).setOutputDim(output_dims);
+
+                // auto &out_neuro_ids = arch.getLayer(name).output_neuron_ids;
+                // for (int k = 0; k < output_dims[2]; k++)
+                // {
+                //     for (int i = 0; i < output_dims[0]; i++)
+                //     {
+                //         for (int j = 0; j < output_dims[1]; j++)
+                //         {
+                //             out_neuro_ids.push_back(k * output_dims[0] * output_dims[1] + 
+                //                                     i * output_dims[1] + j);
+                //         }
+                //     }
+                // }
+
+                layer_counter++;
+            }
+
+
+            std::string class_name = layer["class_name"];
+            std::string name = layer["config"]["name"];
+
+            Layer::Layer_Type layer_type = Layer::Layer_Type::MAX;
+            if (class_name == "InputLayer") { layer_type = Layer::Layer_Type::Input; }
+            else if (class_name == "Conv2D") { layer_type = Layer::Layer_Type::Conv2D; }
+            else if (class_name == "Activation") { layer_type = Layer::Layer_Type::Activation; }
+            else if (class_name == "BatchNormalization") {layer_type = Layer::Layer_Type::BatchNormalization; }
+            else if (class_name == "Dropout") { layer_type = Layer::Layer_Type::Dropout; }
+            else if (class_name == "MaxPooling2D") { layer_type = Layer::Layer_Type::MaxPooling2D; }
+            else if (class_name == "AveragePooling2D") { layer_type = Layer::Layer_Type::AveragePooling2D; }
+            else if (class_name == "Flatten") { layer_type = Layer::Layer_Type::Flatten; }
+            else if (class_name == "Dense") { layer_type = Layer::Layer_Type::Dense; }
+            else if (class_name == "ZeroPadding2D") {layer_type = Layer::Layer_Type::Ignore; }
+            else if (class_name == "Concatenate") {layer_type = Layer::Layer_Type::Concatenate; }
+           // else { std::cerr << "Error: Unsupported layer type.\n"; exit(0); }
+
+            if (class_name != "InputLayer")
+            {
+                arch.addLayer(name, layer_type);
+            }
+            else if (class_name == "InputLayer")
+            {
+                // The input layer is explicitly specified, we need to change its name here.
+                std::string default_name = "input";
+                arch.getLayer(default_name).name = name; // When input is explicitly mentioned.
+            }
+
+            if (class_name == "Conv2D" || class_name == "MaxPooling2D" || class_name == "AveragePooling2D")
+            {
+                // get padding type
+                std::string padding_type = layer["config"]["padding"];
+                if (padding_type == "same")
+                {
+                    arch.getLayer(name).padding_type = Layer::Padding_Type::same;
+                }
+
+                // get strides information
+                std::vector<unsigned> strides;
+
+                for (auto &cell : layer["config"]["strides"]) {
+                    strides.push_back(cell);
+                }
+                arch.getLayer(name).setStrides(strides);
+            }
+
+            if (class_name == "MaxPooling2D" || class_name == "AveragePooling2D")
+            {
+                // We need pool_size since Conv2D's kernel size can be extracted from h5 file
+                auto &pool_size = arch.getLayer(name).w_dims;
+                
+                for (auto &cell : layer["config"]["pool_size"]) {
+                    pool_size.push_back(cell);
+                }
+                pool_size.push_back(1); // depth is 1
+            }
+
+            if (class_name == "Concatenate") {
+                std::vector<std::string> concat_input_layers;
+                for (auto& in_layer_info : layer["inbound_nodes"][0]) {  
+                    std::string in_layer_s = (in_layer_info)[0];
+                    
+                    //concat has input concat
+                    if (arch.getLayer(in_layer_s).layer_type == 
+                            Layer::Layer_Type::Concatenate)
+                    {
+                        if (auto iter = concat_input.find(in_layer_s);
+                                     iter != concat_input.end())
+                        {
+                            for (auto& l : (*iter).second) {
+                                concat_input_layers.push_back(l);
+                            }
+                               
+                        } else { //concat not registered
+                            throw "Concatenate layers not in definition order";
+                        }
+                    } else { //concat has input conv + conv
+                        concat_input_layers.push_back(in_layer_s);
+                    }
+                }
+                concat_input.insert({name, concat_input_layers});
+            }
+
+            layer_counter++;
+            // TODO, more information to extract, such as activation method...
+        }
+
+        for (auto& layer: json_layers) {
+            std::string layer_name = layer["name"];
+            
+            if (arch.getLayer(layer_name).layer_type == Layer::Layer_Type::Concatenate) {
+                continue;
+            }
+
+            for (auto& in_layer_info : layer["inbound_nodes"][0]) {  
+                std::string in_layer_s = (in_layer_info)[0];
+
+                //input layer is of type concat
+                if (arch.getLayer(in_layer_s).layer_type == Layer::Layer_Type::Concatenate)
+                {
+                    if (auto iter = concat_input.find(in_layer_s);
+                                     iter != concat_input.end())
+                    {
+                        for (auto& l : (*iter).second) {
+                            arch.getLayer(layer_name).inbound_layers.push_back(l);
+                            arch.getLayer(l).outbound_layers.push_back(layer_name);
+                        }
+                    }
+                } 
+                else //input layer is not concat
+                {
+                    arch.getLayer(in_layer_s).outbound_layers.push_back(layer_name);
+                    arch.getLayer(layer_name).inbound_layers.push_back(in_layer_s);
+                }
+
+            }
+        }
+
+    }
+    catch (std::exception const& e)
+    {
+        std::cerr << e.what() << std::endl;
+        exit(0);
+    }
+
+    std::set<std::string> temp = {};
+    arch.labelLayerWithDepth(0, temp);  
+}
+
+void Model::Architecture::printLayerConns(std::string &out_root) {
+    std::string layer_conn_out_txt = out_root + ".layer_connection_info.txt";
+    std::ofstream conns_out(layer_conn_out_txt);
+
+    for (int i = 0; i < layers.size() - 1; i++) 
+    {
+        if (layers[i].layer_type != Layer::Layer_Type::Concatenate) 
+        {
+            conns_out << layers[i].name << " ";
+            for (auto& out_layer: layers[i].outbound_layers) 
+                conns_out << out_layer << " ";
+            conns_out << "\n";
+        }
+    } 
+}
+
+void Model::Architecture::labelLayerWithDepth(uint64_t starting_depth, std::set<std::string>& indepth) {
+    std::set<std::string> outdepth = {};
+    if (starting_depth == 0) { //indepth should be snn 
+        for (auto& layer : layers) 
+        {
+            if ((layer.inbound_layers.size() == 0) && (layer.layer_type != Layer::Layer_Type::Concatenate))
+            {
+                layer.setDepth(1);
+                outdepth.insert(layer.name);
+            }   
+        }
+        labelLayerWithDepth(1, outdepth);
+    } else if (indepth.size()) { // If not last depth   
+        for (auto& layer_name : indepth)
+        {
+            for (auto& out_layer_name: getLayer(layer_name).outbound_layers) 
+            {
+                Layer& layer = getLayer(out_layer_name);
+                layer.setDepth(std::max((int)starting_depth + 1, layer.getDepth()));
+                if (layer.getDepth() == starting_depth + 1)                
+                    outdepth.insert(out_layer_name);
+            }
+        }
+        labelLayerWithDepth(starting_depth + 1, outdepth);
+    } else {
+        return;
+    }
+}
+
+void Model::Architecture::outputLayerDepthIR(const std::string& out_file)
+{
+    if (layers.size() == 0) {
+        return;
+    }
+
+    std::fstream file;
+    file.open(out_file, std::fstream::out);
+
+    for (auto &layer : layers)
+    {
+        if (layer.layer_type != Layer::Layer_Type::Concatenate) 
+        {
+            file << layer.name << " ";
+            file << layer.getDepth();
+            file << "\n";            
+        }
+    }
+
+    file.close();
+    return;
+}
+
+std::pair<uint64_t, uint64_t> Model::Architecture::getIrregularMetric() {
+    //Define irregular metric as (\sum_{i=0} n {\sum_{j=0} k_i {d_i - d_j}}) / num_connection
+    //for networks that has n layers, layer i has k_i input connections
+    uint64_t metric = 0;
+    uint64_t num_connections = 0;
+    for (auto& layer : layers) {
+        for (auto& in_layer_name : layer.inbound_layers) {
+//        for (auto& inneu_id : neuron.getInputNeuronIDList()) {
+            metric += (layer.getDepth() - getLayer(in_layer_name).getDepth() - 1);
+            num_connections++;
+        }
+    }
+    std::pair<uint64_t, uint64_t> returnVal = std::make_pair(metric, num_connections);
+    return returnVal;
+}
+
+//Recursive function to unroll concat layers -- too much execution time
+// std::vector<std::string> unrollConcat(std::string name) {
+//     std::vector<std::string> in_names;
+//     bool last_concat = false;
+//     std::size_t found = name.find("concat");
+//     if (found != std::string::npos) {
+//         for (auto& in : arch.getLayer(name).inbound_layers) {
+//             std::vector<std::string> unroll_ins = unrollConcat(in.name));
+//             for (auto &in_layer_name: unroll_ins) {
+//                 in_names.push_back(in_layer_name);
+//             }
+//         }
+//     } else {
+//         in_names.push_back(name);
+//     }
+//     return in_names;
+// } //Not tested -idea only
+
+
+//load arch using propertyTree instead of json lib
+void Model::loadArch2(std::string &arch_file)
 {
     try
     {
@@ -793,7 +1083,7 @@ void Model::loadArch(std::string &arch_file)
                     input_shape.push_back(cell.second.get_value<std::string>());
                 }
 
-                input_shape.erase(input_shape.begin());
+                input_shape.erase(input_shape.begin()); //Delete the first null (see json for more details)
                 for (auto dim : input_shape) { output_dims.push_back(stoll(dim)); }
 
                 std::string name = "input";
@@ -830,7 +1120,9 @@ void Model::loadArch(std::string &arch_file)
             else if (class_name == "AveragePooling2D") { layer_type = Layer::Layer_Type::AveragePooling2D; }
             else if (class_name == "Flatten") { layer_type = Layer::Layer_Type::Flatten; }
             else if (class_name == "Dense") { layer_type = Layer::Layer_Type::Dense; }
-            // else { std::cerr << "Error: Unsupported layer type.\n"; exit(0); }
+            else if (class_name == "ZeroPadding2D") {layer_type = Layer::Layer_Type::Ignore; }
+            else if (class_name == "Concatenate") {layer_type = Layer::Layer_Type::Ignore; }
+           // else { std::cerr << "Error: Unsupported layer type.\n"; exit(0); }
 
             if (class_name != "InputLayer")
             {
@@ -881,6 +1173,24 @@ void Model::loadArch(std::string &arch_file)
             // TODO, more information to extract, such as activation method...
 
             layer_counter++;
+        }
+
+        // Iterate through the layers
+        BOOST_FOREACH(boost::property_tree::ptree::value_type &v, pt.get_child("config.layers"))
+        {
+            std::string class_name = v.second.get<std::string>("class_name");
+            std::string name = v.second.get<std::string>("config.name");
+            std::vector<std::string> _inbound_layers;
+
+            //std::cout << name << " ";
+            for (boost::property_tree::ptree::value_type &item : v.second.get_child("inbound_nodes"))
+            {
+                //std::cout << item.second.get_value<std::string>() << " ";
+                for (boost::property_tree::ptree::value_type &layer_info : item.second.get_child("0")) {
+                   _inbound_layers.push_back(layer_info.second.get_value<std::string>());
+                    std::cout << layer_info.second.get_value<std::string>() << " ";
+                }
+            }
         }
     }
     catch (std::exception const& e)
@@ -940,7 +1250,7 @@ void Model::scanGroup(hid_t gid)
             // If it's a dataset, that means group has a bias and kernel dataset
         case H5G_DATASET:
             dsid = H5Dopen(gid, memb_name, H5P_DEFAULT);
-            H5Iget_name(dsid, ds_name, MAX_NAME);
+            H5Iget_name(dsid, ds_name, MAX_NAME);   
             // std::cout << ds_name << "\n";
             extrWeights(dsid);
             break;
@@ -1033,5 +1343,6 @@ void Model::extrWeights(hid_t id)
     }
     free(rdata);
 }
+
 }
 }
